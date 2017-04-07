@@ -46,23 +46,28 @@ S next(S state, I input, S err, T t1)
     return err;
 }
 
+template<typename Iter, typename State, typename ...Transitions>
+State run(Iter begin, Iter end, State start, State error, Transitions ...transitions )
+{
+    while (begin != end && start != error)
+    {
+        start = next(start, *begin++, error, transitions...);
+    }
+    
+    return start;
+}
 
 #include <iostream>
 
-bool test(const char *start, const char *end)
+bool test(const char *begin, const char *end)
 {
     enum State { A, B, E };
-    State s = A;
     
-    while (start != end)
-    {
-        s = next(s, *start++, E, 
+    return run(begin, end, A, E,
                  make_transition(A, B, [](char c){ return c == 'a'; }, [](){ std::cout << "A->B" << std::endl; }),
                  make_transition(B, B, [](char c){ return c == 'b'; }, [](){ std::cout << "B->B" << std::endl; }),
-                 make_transition(B, A, [](char c){ return c != 'b'; }, [](){ std::cout << "B->A" << std::endl; }));
-    }
-    
-    return s != E;
+                 make_transition(B, A, [](char c){ return c != 'b'; }, [](){ std::cout << "B->A" << std::endl; })
+                );
 }
 
 
@@ -71,7 +76,7 @@ bool test(const char *start, const char *end)
 int main(int argc, char * argv[])
 {
     
-    char txt[] = "abbc";
+    char txt[] = "abbca";
     std::cout << test(txt, txt+sizeof(txt)-1) << std::endl;
     return 0;
     
